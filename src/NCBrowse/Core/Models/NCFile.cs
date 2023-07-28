@@ -29,11 +29,24 @@ public class NCFile : INCFile
 		foreach (Variable variable in dataset.Variables)
 		{
 			string? longName = variable.Metadata[attribLongName] as string;
+			IEnumerable<NCAttribute> attributes = GetAttributes(variable);
 			yield return new NCVariable(
 				variable.Name,
 				variable.TypeOfData.Name,
 				variable.Dimensions.Select(d => d.Name),
-				longName);
+				longName,
+				attributes);
+		}
+	}
+
+	private IEnumerable<NCAttribute> GetAttributes(Variable variable)
+	{
+		foreach ( (string key, object value) in variable.Metadata)
+		{
+			string? valueString = value.ToString();
+			if (valueString != null)
+				yield return new NCAttribute(key, valueString);
+			// todo: else warning
 		}
 	}
 

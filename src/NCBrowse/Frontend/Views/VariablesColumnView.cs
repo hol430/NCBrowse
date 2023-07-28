@@ -1,5 +1,7 @@
 using Gtk;
 using NCBrowse.Core.Models.Netcdf;
+using NCBrowse.Frontend.Extensions;
+using NCBrowse.Frontend.Signals;
 
 namespace NCBrowse.Frontend.Views;
 
@@ -8,6 +10,10 @@ public class VariablesColumnView : ColumnView
 	private readonly SignalListItemFactory nameFactory;
 	private readonly SignalListItemFactory longNameFactory;
 	private readonly Gio.ListStore model;
+	private readonly SingleSelection selection;
+	private readonly Event<NCVariable> onSelectionChanged;
+
+	public IEvent<NCVariable> OnSelectionChanged => onSelectionChanged;
 
 	public VariablesColumnView(IEnumerable<NCVariable> variables) : this()
 	{
@@ -19,6 +25,11 @@ public class VariablesColumnView : ColumnView
 	{
 		nameFactory = SignalListItemFactory.New();
 		longNameFactory = SignalListItemFactory.New();
+		onSelectionChanged = new Event<NCVariable>();
+
+		model = Gio.ListStore.New(VariableWrapper.GetGType());
+		selection = SingleSelection.New(model);
+
 		ConnectEvents();
 
 		ColumnViewColumn nameColumn = CreateColumn("Name", nameFactory);
@@ -27,8 +38,6 @@ public class VariablesColumnView : ColumnView
 		AppendColumn(nameColumn);
 		AppendColumn(longNameColumn);
 
-		model = Gio.ListStore.New(VariableWrapper.GetGType());
-		var selection = SingleSelection.New(model);
 		this.Model = selection;
 	}
 
@@ -55,6 +64,7 @@ public class VariablesColumnView : ColumnView
 		nameFactory.OnBind += OnBindName;
 		longNameFactory.OnSetup += OnSetupLabelColumn;
 		longNameFactory.OnBind += OnBindLongName;
+		selection.ConnectOnSelectionChanged(SelectionChanged);
 	}
 
 	private void DisconnectEvents()
@@ -63,6 +73,25 @@ public class VariablesColumnView : ColumnView
 		nameFactory.OnBind -= OnBindName;
 		longNameFactory.OnSetup -= OnSetupLabelColumn;
 		longNameFactory.OnBind -= OnBindLongName;
+		selection.DisconnectOnSelectionChanged(SelectionChanged);
+		onSelectionChanged.DisconnectAll();
+	}
+
+	private void SelectionChanged(SingleSelection sender, GtkExtensions.SelectionChangedSignalArgs args)
+	{
+		try
+		{
+			VariableWrapper? wrapper = model.GetObject(selection.Selected) as VariableWrapper;
+			if (wrapper == null)
+				return;
+
+			NCVariable variable = wrapper.Data;
+			onSelectionChanged.Invoke(variable);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
 	}
 
 	private void OnBindLongName(SignalListItemFactory sender, SignalListItemFactory.BindSignalArgs args)

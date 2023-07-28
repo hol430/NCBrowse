@@ -138,6 +138,9 @@ public class MainView : ApplicationWindow, IMainView
 		contents.Append(main);
 		SetContent(contents);
 
+		DefaultWidth = 640;
+		DefaultHeight = 480;
+
 		Maximized = true;
 	}
 

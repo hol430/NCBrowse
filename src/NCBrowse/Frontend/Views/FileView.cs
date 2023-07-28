@@ -29,17 +29,74 @@ public class FileView : Box, IFileView
 
 	private readonly VariablesColumnView list;
 
+	private readonly VariableMetadataView metadataView;
+
+	private readonly Label metadataHeader;
+
 	/// <summary>
 	/// Create a new <see cref="FileView"/> instance.
 	/// </summary>
 	public FileView() : base()
 	{
 		list = new VariablesColumnView();
-		ScrolledWindow scroller = new ScrolledWindow();
-		scroller.Child = list;
-		scroller.PropagateNaturalHeight = true;
-		scroller.PropagateNaturalWidth = true;
-		Append(scroller);
+		ScrolledWindow variablesScroller = GtkExtensions.CreateExpandingScrolledWindow();
+		variablesScroller.Child = list;
+
+		Box variablesBox = new Box();
+		variablesBox.SetOrientation(Orientation.Vertical);
+		Label variablesHeader = CreateHeaderLabel("Variables");
+		variablesBox.Append(variablesHeader);
+		variablesBox.Append(variablesScroller);
+		Frame variablesFrame = CreateFrame(variablesBox);
+		variablesFrame.Hexpand = false;
+
+		metadataView = new VariableMetadataView();
+		ScrolledWindow metadataScroller = GtkExtensions.CreateExpandingScrolledWindow();
+		metadataScroller.Child = metadataView;
+
+		Box metadataBox = new Box();
+		metadataBox.SetOrientation(Orientation.Vertical);
+		metadataHeader = CreateHeaderLabel("Metadata");
+		metadataBox.Append(metadataHeader);
+		metadataBox.Append(metadataScroller);
+		metadataHeader.Hide();
+
+		Frame metadataFrame = CreateFrame(metadataBox);
+
+		Paned panel = new Paned();
+		panel.WideHandle = true;
+		panel.SetOrientation(Orientation.Horizontal);
+		panel.StartChild = variablesFrame;
+		panel.EndChild = metadataFrame;
+		Append(panel);
+
+		ConnectEvents();
+	}
+
+	private Frame CreateFrame(Widget child)
+	{
+		Frame frame = new Frame();
+		frame.Child = child;
+		frame.Hexpand = true;
+		return frame;
+	}
+
+	private Label CreateHeaderLabel(string text)
+	{
+		Label label = Label.New(text);
+		label.AddCssClass(StyleClasses.Heading);
+		label.Halign = Align.Start;
+		label.SetMargins(10);
+		return label;
+	}
+
+	private void ConnectEvents()
+	{
+		list.OnSelectionChanged.ConnectTo(OnVariableSelected);
+	}
+
+	private void DisconnectEvents()
+	{
 	}
 
 	/// <inheritdoc />
@@ -51,47 +108,25 @@ public class FileView : Box, IFileView
 	/// <inheritdoc />
 	public Widget GetWidget() => this;
 
+	public override void Dispose()
+	{
+		DisconnectEvents();
+		base.Dispose();
+	}
+
+	private void OnVariableSelected(NCVariable variable)
+	{
+		metadataHeader.SetText($"{variable.Name} metadata");
+		metadataHeader.Show();
+		metadataView.Update(variable);
+	}
+
 	private class VariableWrapper : GObject.Object
 	{
 		public NCVariable Data { get; private init; }
 		public VariableWrapper(NCVariable data) : base(true, Array.Empty<GObject.ConstructArgument>())
 		{
 			Data = data;
-		}
-	}
-
-	private class VariableRow : ListViewWidget<VariableWrapper>
-	{
-		private readonly Label nameLabel;
-		private readonly Label longNameLabel;
-
-		public VariableRow()
-		{
-			Spacing = 6;
-			MarginTop = MarginBottom = MarginStart = MarginEnd = 10;
-			SetOrientation(Orientation.Vertical);
-
-			nameLabel = CreateLabel();
-			longNameLabel = CreateLabel();
-
-			Append(nameLabel);
-			Append(longNameLabel);
-		}
-
-		private Label CreateLabel()
-		{
-			Label label = new Label();
-			label.Halign = Align.Start;
-			label.Hexpand = true;
-			label.Ellipsize = Pango.EllipsizeMode.End;
-			return label;
-		}
-
-		/// <inheritdoc />
-		public override void Update(VariableWrapper datum)
-		{
-			nameLabel.SetText(datum.Data.Name);
-			longNameLabel.SetText(datum.Data.LongName ?? "--");
 		}
 	}
 }

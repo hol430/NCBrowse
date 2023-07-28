@@ -8,20 +8,25 @@ public static class StyleClasses
 	/// <summary>
 	/// Name of the gtk 'title' css class.
 	/// </summary>
-	public static string Title { get; } = "title";
+	public const string Title = "title";
 
 	/// <summary>
 	/// Name of the gtk 'subtitle' css class.
 	/// </summary>
-	public static string Subtitle { get; } = "subtitle";
+	public const string Subtitle = "subtitle";
+
+	/// <summary>
+	/// Name of the gtk 'heading' css class.
+	/// </summary>
+	public const string Heading = "heading";
 
 	/// <summary>
 	/// Name of the gtk 'suggested-action' css class.
 	/// </summary>
-	public static string SuggestedAction { get; } = "suggested-action";
+	public const string SuggestedAction = "suggested-action";
 
 	/// <summary>
 	/// Name of the gtk 'destructive-action' css class.
 	/// </summary>
-	public static string DestructiveAction { get; } = "destructive-action";
+	public const string DestructiveAction = "destructive-action";
 }

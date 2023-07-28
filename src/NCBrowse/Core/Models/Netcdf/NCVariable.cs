@@ -26,17 +26,24 @@ public class NCVariable
 	public IEnumerable<string> Dimensions { get; private init; }
 
 	/// <summary>
+	/// Attributes of this variabe.
+	/// </summary>
+	public IEnumerable<NCAttribute> Attributes { get; private init; }
+
+	/// <summary>
 	/// Create a new <see cref="NCVariable"/> instance.
 	/// </summary>
 	/// <param name="name">Name of the variable.</param>
 	/// <param name="dataType">Type of the variable.</param>
 	/// <param name="dimensions">Dimensions of this variable.</param>
 	/// <param name="longName">Long name of the variablel, or null if it doesn't have one.</param>
-	public NCVariable(string name, string dataType, IEnumerable<string> dimensions, string? longName)
+	/// <param name="attributes">Attributes of this variable.</param>
+	public NCVariable(string name, string dataType, IEnumerable<string> dimensions, string? longName, IEnumerable<NCAttribute> attributes)
 	{
 		Name = name;
 		DataType = dataType;
 		Dimensions = dimensions;
 		LongName = longName;
+		Attributes = attributes;
 	}
 }

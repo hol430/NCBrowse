@@ -103,4 +103,20 @@ public static class GtkExtensions
 	{
 		SelectionChangedSignal.Disconnect (o, handler);
 	}
+
+	public static ScrolledWindow CreateExpandingScrolledWindow()
+	{
+		ScrolledWindow scroller = new ScrolledWindow();
+		scroller.PropagateNaturalHeight = true;
+		scroller.PropagateNaturalWidth = true;
+		return scroller;
+	}
+
+	public static void SetMargins(this Widget widget, int margin)
+	{
+		widget.MarginStart = margin;
+		widget.MarginEnd = margin;
+		widget.MarginTop = margin;
+		widget.MarginBottom = margin;
+	}
 }
