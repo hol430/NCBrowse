@@ -1,5 +1,6 @@
 using Microsoft.Research.Science.Data;
 using Microsoft.Research.Science.Data.Imperative;
+using NCBrowse.Core.Extensions;
 using NCBrowse.Core.Interfaces;
 using NCBrowse.Core.Models.Netcdf;
 
@@ -32,8 +33,8 @@ public class NCFile : INCFile
 			IEnumerable<NCAttribute> attributes = GetAttributes(variable);
 			yield return new NCVariable(
 				variable.Name,
-				variable.TypeOfData.Name,
-				variable.Dimensions.Select(d => d.Name),
+				variable.TypeOfData.FriendlyName(),
+				variable.Dimensions.Select(d => new NCDimension(d.Name, false, d.Length)),
 				longName,
 				attributes);
 		}

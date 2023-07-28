@@ -1,4 +1,4 @@
 ## NCBrowse
 
-A graphical NetCDF file viewer.
+A prototype graphical NetCDF file viewer.
 

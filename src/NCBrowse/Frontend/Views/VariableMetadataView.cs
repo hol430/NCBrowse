@@ -12,7 +12,7 @@ public class VariableMetadataView : Box
 
 	public VariableMetadataView() : base()
 	{
-		this.SetMargins(10);
+		// this.SetMargins(10);
 		SetOrientation(Orientation.Vertical);
 
 		factory = new StringColumnViewFactory<NCAttribute>();
@@ -25,7 +25,7 @@ public class VariableMetadataView : Box
 	public void Update(NCVariable variable)
 	{
 		Clear();
-		foreach (NCAttribute attribute in variable.Attributes)
+		foreach (NCAttribute attribute in variable.Attributes.OrderBy(a => a.Name))
 			AddAttribute(attribute);
 	}
 

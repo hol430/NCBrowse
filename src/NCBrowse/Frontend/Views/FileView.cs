@@ -116,7 +116,10 @@ public class FileView : Box, IFileView
 
 	private void OnVariableSelected(NCVariable variable)
 	{
-		metadataHeader.SetText($"{variable.Name} metadata");
+		var dim2text = (NCDimension dim) => $"{dim.Name}={dim.Size}";
+		string dims = string.Join(", ", variable.Dimensions.Select(dim2text));
+		string label = $"{variable.DataType} {variable.Name} ({dims})";
+		metadataHeader.SetText(label);
 		metadataHeader.Show();
 		metadataView.Update(variable);
 	}
