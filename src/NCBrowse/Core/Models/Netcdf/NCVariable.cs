@@ -1,3 +1,5 @@
+using NCBrowse.Core.Extensions;
+
 namespace NCBrowse.Core.Models.Netcdf;
 
 /// <summary>
@@ -10,10 +12,12 @@ public class NCVariable
 	/// </summary>
 	public string Name { get; private init; }
 
+	public Type DataType { get; private init; }
+
 	/// <summary>
 	/// Type of the variable.
 	/// </summary>
-	public string DataType { get; private init; }
+	public string TypeName => DataType.FriendlyName();
 
 	/// <summary>
 	/// Long name of the variable, or null if it doesn't have one.
@@ -38,7 +42,7 @@ public class NCVariable
 	/// <param name="dimensions">Dimensions of this variable.</param>
 	/// <param name="longName">Long name of the variablel, or null if it doesn't have one.</param>
 	/// <param name="attributes">Attributes of this variable.</param>
-	public NCVariable(string name, string dataType, IEnumerable<NCDimension> dimensions, string? longName, IEnumerable<NCAttribute> attributes)
+	public NCVariable(string name, Type dataType, IEnumerable<NCDimension> dimensions, string? longName, IEnumerable<NCAttribute> attributes)
 	{
 		Name = name;
 		DataType = dataType;

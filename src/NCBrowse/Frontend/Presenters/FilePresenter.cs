@@ -6,6 +6,7 @@ using NCBrowse.Core.Models.Netcdf;
 using NCBrowse.Frontend.Extensions;
 using NCBrowse.Frontend.Interfaces;
 using NCBrowse.Frontend.Views;
+using NCBrowse.Plotting;
 
 namespace NCBrowse.Frontend.Presenters;
 
@@ -33,6 +34,7 @@ public class FilePresenter : IPresenter<IFileView>
 	{
 		this.file = file;
 		view = new FileView();
+		view.OnVariableActivated.ConnectTo(OnVariableActivated);
 		Populate();
 	}
 
@@ -56,4 +58,14 @@ public class FilePresenter : IPresenter<IFileView>
 
 	/// <inheritdoc />
 	public IFileView GetView() => view;
+
+	private void OnVariableActivated(NCVariable variable)
+	{
+		if (variable.DataType != typeof(double))
+			throw new InvalidOperationException($"Only plotting of double variables is supported");
+		IEnumerable<DataPoint<double>> data = file.ReadTimeSeries<double>(variable);
+		IColourScheme colours = new DefaultColours();
+		PlotWindow window = new PlotWindow(variable, data, colours);
+		window.Present();
+	}
 }

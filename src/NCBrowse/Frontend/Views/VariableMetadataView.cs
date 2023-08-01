@@ -19,6 +19,7 @@ public class VariableMetadataView : Box
 		factory.AddColumn("Name", a => a.Name);
 		factory.AddColumn("Value", a => a.Value);
 
+		factory.View.Hexpand = true;
 		Append(factory.View);
 	}
 

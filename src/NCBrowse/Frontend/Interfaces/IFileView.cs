@@ -1,6 +1,7 @@
 // using NCBrowse.Frontend.Delegates;
 
 using NCBrowse.Core.Models.Netcdf;
+using NCBrowse.Frontend.Signals;
 
 namespace NCBrowse.Frontend.Interfaces;
 
@@ -13,4 +14,9 @@ public interface IFileView : IView
 	/// Add a variable to the view.
 	/// </summary>
 	void AddVariable(NCVariable variable);
+
+	/// <summary>
+	/// Called when the user has activated a variable.
+	/// </summary>
+	IEvent<NCVariable> OnVariableActivated { get; }
 }

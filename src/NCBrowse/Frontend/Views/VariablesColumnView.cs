@@ -12,8 +12,10 @@ public class VariablesColumnView : ColumnView
 	private readonly Gio.ListStore model;
 	private readonly SingleSelection selection;
 	private readonly Event<NCVariable> onSelectionChanged;
+	private readonly Event<NCVariable> onVariableActivated;
 
 	public IEvent<NCVariable> OnSelectionChanged => onSelectionChanged;
+	public IEvent<NCVariable> OnVariableActivated => onVariableActivated;
 
 	public VariablesColumnView(IEnumerable<NCVariable> variables) : this()
 	{
@@ -25,7 +27,9 @@ public class VariablesColumnView : ColumnView
 	{
 		nameFactory = SignalListItemFactory.New();
 		longNameFactory = SignalListItemFactory.New();
+
 		onSelectionChanged = new Event<NCVariable>();
+		onVariableActivated = new Event<NCVariable>();
 
 		model = Gio.ListStore.New(VariableWrapper.GetGType());
 		selection = SingleSelection.New(model);
@@ -39,6 +43,20 @@ public class VariablesColumnView : ColumnView
 		AppendColumn(longNameColumn);
 
 		this.Model = selection;
+	}
+
+	private void VariableActivated(ColumnView sender, ActivateSignalArgs args)
+	{
+		try
+		{
+			VariableWrapper? wrapper = model.GetObject(args.Position) as VariableWrapper;
+			if (wrapper != null)
+				onVariableActivated.Invoke(wrapper.Data);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
 	}
 
 	private ColumnViewColumn CreateColumn(string name, SignalListItemFactory factory)
@@ -65,6 +83,8 @@ public class VariablesColumnView : ColumnView
 		longNameFactory.OnSetup += OnSetupLabelColumn;
 		longNameFactory.OnBind += OnBindLongName;
 		selection.ConnectOnSelectionChanged(SelectionChanged);
+
+		this.OnActivate += VariableActivated;
 	}
 
 	private void DisconnectEvents()
@@ -75,6 +95,8 @@ public class VariablesColumnView : ColumnView
 		longNameFactory.OnBind -= OnBindLongName;
 		selection.DisconnectOnSelectionChanged(SelectionChanged);
 		onSelectionChanged.DisconnectAll();
+
+		this.OnActivate -= VariableActivated;
 	}
 
 	private void SelectionChanged(SingleSelection sender, GtkExtensions.SelectionChangedSignalArgs args)

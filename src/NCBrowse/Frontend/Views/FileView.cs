@@ -7,6 +7,7 @@ using NCBrowse.Frontend.Interfaces;
 using File = System.IO.File;
 using Action = System.Action;
 using NCBrowse.Core.Models.Netcdf;
+using NCBrowse.Frontend.Signals;
 // using NCBrowse.Frontend.Delegates;
 // using NCBrowse.Frontend.Enumerations;
 
@@ -28,16 +29,23 @@ public class FileView : Box, IFileView
 	private const string actionDomain = "file";
 
 	private readonly VariablesColumnView list;
-
 	private readonly VariableMetadataView metadataView;
-
 	private readonly Label metadataHeader;
+	private readonly Paned panel;
+
+	private readonly Event<NCVariable> onVariableActivated;
+
+	private bool first = true;
+
+	public IEvent<NCVariable> OnVariableActivated => onVariableActivated;
 
 	/// <summary>
 	/// Create a new <see cref="FileView"/> instance.
 	/// </summary>
 	public FileView() : base()
 	{
+		onVariableActivated = new Event<NCVariable>();
+
 		list = new VariablesColumnView();
 		ScrolledWindow variablesScroller = GtkExtensions.CreateExpandingScrolledWindow();
 		variablesScroller.Child = list;
@@ -62,8 +70,9 @@ public class FileView : Box, IFileView
 		metadataHeader.Hide();
 
 		Frame metadataFrame = CreateFrame(metadataBox);
+		metadataFrame.Hexpand = true;
 
-		Paned panel = new Paned();
+		panel = new Paned();
 		panel.WideHandle = true;
 		panel.SetOrientation(Orientation.Horizontal);
 		panel.StartChild = variablesFrame;
@@ -77,7 +86,6 @@ public class FileView : Box, IFileView
 	{
 		Frame frame = new Frame();
 		frame.Child = child;
-		frame.Hexpand = true;
 		return frame;
 	}
 
@@ -93,6 +101,7 @@ public class FileView : Box, IFileView
 	private void ConnectEvents()
 	{
 		list.OnSelectionChanged.ConnectTo(OnVariableSelected);
+		list.OnVariableActivated.ConnectTo(VariableActivated);
 	}
 
 	private void DisconnectEvents()
@@ -103,6 +112,12 @@ public class FileView : Box, IFileView
 	public void AddVariable(NCVariable variable)
 	{
 		list.AddVariable(variable);
+		// todo: fix initial panel sizing
+		if (first)
+		{
+			OnVariableSelected(variable);
+			first = false;
+		}
 	}
 
 	/// <inheritdoc />
@@ -116,20 +131,18 @@ public class FileView : Box, IFileView
 
 	private void OnVariableSelected(NCVariable variable)
 	{
+		if (!first)
+			panel.PositionSet = true;
 		var dim2text = (NCDimension dim) => $"{dim.Name}={dim.Size}";
 		string dims = string.Join(", ", variable.Dimensions.Select(dim2text));
-		string label = $"{variable.DataType} {variable.Name} ({dims})";
+		string label = $"{variable.TypeName} {variable.Name} ({dims})";
 		metadataHeader.SetText(label);
 		metadataHeader.Show();
 		metadataView.Update(variable);
 	}
 
-	private class VariableWrapper : GObject.Object
+	private void VariableActivated(NCVariable variable)
 	{
-		public NCVariable Data { get; private init; }
-		public VariableWrapper(NCVariable data) : base(true, Array.Empty<GObject.ConstructArgument>())
-		{
-			Data = data;
-		}
+		onVariableActivated.Invoke(variable);
 	}
 }
