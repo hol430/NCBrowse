@@ -54,10 +54,14 @@ public class MainPresenter
 	/// Open the specified file.
 	/// </summary>
 	/// <param name="path">File path.</param>
-	private void OpenFile(string path)
+	public void OpenFile(string path)
 	{
 		// Close previous file.
 		child.Dispose();
+
+		// Get absolute path if the file exists on the local filesystem.
+		if (File.Exists(path))
+			path = Path.GetFullPath(path);
 
 		// Open new file.
 		NCFile file = new NCFile(path);

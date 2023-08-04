@@ -21,7 +21,7 @@ public class NCFile : INCFile
 	public NCFile(string path)
 	{
 		// Ensure file exists.
-		if (!System.IO.File.Exists(path))
+		if (!File.Exists(path))
 			throw new FileNotFoundException($"File not found: '${path}'", path);
 
 		dataset = DataSet.Open(path, ResourceOpenMode.Open);

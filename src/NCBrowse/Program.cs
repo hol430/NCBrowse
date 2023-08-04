@@ -15,14 +15,14 @@ app.OnStartup += OnStartup;
 app.OnActivate += OnActivated;
 app.OnShutdown += OnShutdown;
 
-app.Run();
+app.Run(args.Length, args);
 
 void OnStartup(object sender, EventArgs args)
 {
 	// Perform one-time application initialisation here.
 }
 
-void OnActivated(object sender, EventArgs args)
+void OnActivated(object sender, EventArgs data)
 {
 	Application app = (Application)sender;
 	MainView window = new MainView(app);
@@ -30,6 +30,12 @@ void OnActivated(object sender, EventArgs args)
 	{
 		MainPresenter presenter = new MainPresenter(window);
 		window.Show();
+		if (args.Length > 0)
+		{
+			string arg = args[0];
+			if (File.Exists(arg))
+				presenter.OpenFile(arg);
+		}
 	}
 	catch (Exception error)
 	{
