@@ -99,7 +99,7 @@ public class MainView : ApplicationWindow, IMainView
 
 		MenuButton menuButton = new MenuButton();
 		menuButton.MenuModel = menu;
-		menuButton.IconName = "open-menu-symbolic";
+		menuButton.IconName = Icons.OpenMenu;
 
 		Button openInsFile = Button.NewWithLabel("Open");
 		openInsFile.OnClicked += OnOpenNCFile;
