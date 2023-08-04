@@ -7,6 +7,7 @@ using OxyPlot.Legends;
 using OxyPlot.Series;
 using OxyPlot.GtkSharp;
 using NCBrowse.Plotting;
+using NCBrowse.Frontend.Extensions;
 
 namespace NCBrowse.Frontend.Views;
 
@@ -36,9 +37,9 @@ public class PlotWindow : Window
 		model.Axes.Add(xAxis);
 		model.Axes.Add(yAxis);
 		model.Title = variable.Name;
-		model.TextColor = foregroundColour;
-		model.TitleColor = foregroundColour;
-		model.SubtitleColor = foregroundColour;
+
+		// Configure foreground colours.
+		model.SetForegroundColour(foregroundColour);
 
 		plotView = new PlotView();
 		plotView.Model = model;
