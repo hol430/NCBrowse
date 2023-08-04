@@ -28,7 +28,13 @@ public class PlotWindow : Window
 		timeseries.Color = colourScheme.GetColours(1).ElementAt(0);
 
 		Axis xAxis = new DateTimeAxis();
+		xAxis.Title = "Date";
 		Axis yAxis = new LinearAxis();
+		string? units = variable.Units;
+		if (string.IsNullOrEmpty(units))
+			yAxis.Title = variable.Name;
+		else
+			yAxis.Title = $"{variable.Name} ({units})";
 
 		OxyColor foregroundColour = GetForegroundColour();
 
@@ -36,7 +42,7 @@ public class PlotWindow : Window
 		model.Series.Add(timeseries);
 		model.Axes.Add(xAxis);
 		model.Axes.Add(yAxis);
-		model.Title = variable.Name;
+		model.Title = variable.LongName ?? variable.Name;
 
 		// Configure foreground colours.
 		model.SetForegroundColour(foregroundColour);

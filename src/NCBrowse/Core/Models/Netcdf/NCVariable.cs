@@ -25,6 +25,11 @@ public class NCVariable
 	public string? LongName { get; private init; }
 
 	/// <summary>
+	/// Get the units of this variable.
+	/// </summary>
+	public string? Units => Attributes.FirstOrDefault(a => a.Name.Equals("Units", StringComparison.InvariantCultureIgnoreCase))?.Value;
+
+	/// <summary>
 	/// Dimensions of this variable.
 	/// </summary>
 	public IEnumerable<NCDimension> Dimensions { get; private init; }
