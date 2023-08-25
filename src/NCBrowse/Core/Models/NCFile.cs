@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.Research.Science.Data;
 using Microsoft.Research.Science.Data.Imperative;
@@ -32,7 +33,9 @@ public class NCFile : INCFile
 	{
 		foreach (Variable variable in dataset.Variables)
 		{
-			string? longName = variable.Metadata[attribLongName] as string;
+			string? longName = null;
+			if (variable.Metadata.ContainsKey(attribLongName))
+				longName = variable.Metadata[attribLongName] as string;
 			IEnumerable<NCAttribute> attributes = GetAttributes(variable);
 			yield return new NCVariable(
 				variable.Name,
@@ -75,16 +78,52 @@ public class NCFile : INCFile
 		T[,,] result = dataset.GetData<T[,,]>(variable.Name, indices);
 
 		// Read time data.
-		Dimension time = GetTimeDimension()!;
-		Range range = DataSet.Range(0, dataset.Dimensions[time.Name].Length - 1);
-		double[] times = dataset.GetData<double[]>(time.Name, range);
-
+		Dimension time = GetTimeDimension();
+		double[] times = ReadTemporalData(time.Name);
 		TimeUnits timeUnits = GetTimeUnits(time);
+
 		return result.Slice3d(0, 0).Zip(times).Select(x => new DataPoint<T>(GetDate(timeUnits, x.Second), x.First));
 		// return result.Slice3d(0, 0).Zip(time).Select(x => new DataPoint<T>(x.Second, x.First));
 	}
 
-	private TimeUnits GetTimeUnits(Dimension dim)
+    private double[] ReadTemporalData(string timeName)
+    {
+		try
+		{
+			Variable variable = dataset.Variables[timeName];
+			if (variable.Dimensions.Count != 1)
+				throw new InvalidOperationException($"Time variable has {variable.Dimensions.Count} variables. This is not supported by this app (time must be 1-dimensional)");
+
+			Range range = DataSet.Range(0, dataset.Dimensions[timeName].Length - 1);
+			Type dataType = variable.TypeOfData;
+			Type arrayType = dataType.MakeArrayType();
+			BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+			Type[] argumentTypes = new[] { typeof(DataSet), typeof(string), typeof(Range) };
+			MethodInfo? method = typeof(DataSetExtensions).GetMethod(nameof(DataSetExtensions.GetData), flags, argumentTypes);
+			if (method == null)
+				throw new InvalidOperationException($"Time has invalid data type: {dataType.Name}. No GetData() method exists for this type.");
+
+			method = method.MakeGenericMethod(arrayType);
+
+			object? result = method.Invoke(dataset, new object[] { dataset, timeName, range });
+
+			if (result == null)
+				throw new InvalidCastException($"Time variable contains no data");
+
+			if (dataType == typeof(double))
+				return (double[])result!;
+
+			// double[] result = dataset.GetData<double[]>(timeName, range);
+			throw new Exception("TBI");
+			// return result;
+		}
+		catch (Exception error)
+		{
+			throw new InvalidOperationException($"Unable to read time data", error);
+		}
+    }
+
+    private TimeUnits GetTimeUnits(Dimension dim)
 	{
 		if (dataset.Variables[dim.Name].TypeOfData != typeof(double))
 			throw new InvalidOperationException($"Only double typed time dimension is supported");

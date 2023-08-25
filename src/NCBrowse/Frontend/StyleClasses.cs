@@ -29,4 +29,9 @@ public static class StyleClasses
 	/// Name of the gtk 'destructive-action' css class.
 	/// </summary>
 	public const string DestructiveAction = "destructive-action";
+
+	/// <summary>
+	/// A button with a border around it.
+	/// </summary>
+	public const string Raised = "raised";
 }

@@ -47,6 +47,7 @@ public class FileView : Box, IFileView
 		onVariableActivated = new Event<NCVariable>();
 
 		list = new VariablesColumnView();
+		list.Vexpand = true;
 		ScrolledWindow variablesScroller = GtkExtensions.CreateExpandingScrolledWindow();
 		variablesScroller.Child = list;
 

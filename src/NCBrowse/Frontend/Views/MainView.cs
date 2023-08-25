@@ -101,7 +101,14 @@ public class MainView : ApplicationWindow, IMainView
 		menuButton.MenuModel = menu;
 		menuButton.IconName = Icons.OpenMenu;
 
-		Button openInsFile = Button.NewWithLabel("Open");
+		// Button openInsFile = Button.NewWithLabel("Open");
+		Button openInsFile = new Button();
+		openInsFile.Child = new ButtonContent()
+		{
+			Label = "Open",
+			IconName = Icons.OpenDocument
+		};
+		openInsFile.AddCssClass(StyleClasses.Raised);
 		openInsFile.OnClicked += OnOpenNCFile;
 
 		title = Label.New(Title);
