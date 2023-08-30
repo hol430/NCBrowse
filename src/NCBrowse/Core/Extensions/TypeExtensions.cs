@@ -1,3 +1,6 @@
+using System.Reflection;
+using System.Reflection.Metadata;
+
 namespace NCBrowse.Core.Extensions;
 
 public static class TypeExtensions
@@ -29,5 +32,23 @@ public static class TypeExtensions
 		if (friendlyNameLookup.TryGetValue(type, out string? friendly))
 			return friendly;
 		return type.Name;
+	}
+
+	public static MethodInfo GetGenericMethod(this Type type, string name, BindingFlags flags, params Type[] argumentTypes)
+	{
+		IEnumerable<MethodInfo> methods = typeof(Enumerable)
+			.GetMethods(flags)
+			.Where(m => m.Name == name)
+			.Where(m => m.GetParameters().Length == argumentTypes.Length);
+		foreach (MethodInfo method in methods)
+		{
+			// Check if parameter types match the expected types.
+			IEnumerable<Type> types = method.GetParameters()
+				.Select(p => p.ParameterType)
+				.Select(t => t.IsGenericType ? t.GetGenericTypeDefinition() : t);
+			if (types.Zip(argumentTypes).All(x => x.First == x.Second))
+				return method;
+		}
+		throw new InvalidOperationException($"Unable to get {type.Name}.{name} method. Method with the provided parameters does not exist.");
 	}
 }

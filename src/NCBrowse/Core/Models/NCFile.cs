@@ -36,13 +36,33 @@ public class NCFile : INCFile
 			string? longName = null;
 			if (variable.Metadata.ContainsKey(attribLongName))
 				longName = variable.Metadata[attribLongName] as string;
+			object? missingValue = variable.MissingValue;
+			if (missingValue == null)
+			{
+				string[] names = new[]
+				{
+					"missingvalue",
+					"missing_value",
+					"_missingvalue"
+				};
+				foreach (string name in names)
+				{
+					if (variable.Metadata.ContainsKey(name))
+					{
+						missingValue = variable.Metadata[name];
+						if (missingValue != null)
+							break;
+					}
+				}
+			}
 			IEnumerable<NCAttribute> attributes = GetAttributes(variable);
 			yield return new NCVariable(
 				variable.Name,
 				variable.TypeOfData,
 				variable.Dimensions.Select(d => new NCDimension(d.Name, false, d.Length)),
 				longName,
-				attributes);
+				attributes,
+				missingValue);
 		}
 	}
 
@@ -82,7 +102,16 @@ public class NCFile : INCFile
 		double[] times = ReadTemporalData(time.Name);
 		TimeUnits timeUnits = GetTimeUnits(time);
 
-		return result.Slice3d(0, 0).Zip(times).Select(x => new DataPoint<T>(GetDate(timeUnits, x.Second), x.First));
+		IEnumerable<(T, double)> zipped = result.Slice3d(0, 0).Zip(times);
+		// zipped = zipped.Where(x => x.Item1 != missingValue);
+
+		object? missingValue = variable.MissingValue;
+		if (missingValue != null)
+		{
+			zipped = zipped.Where(x => x.Item1?.Equals(missingValue) == false);
+		}
+
+		return zipped.Select(x => new DataPoint<T>(GetDate(timeUnits, x.Item2), x.Item1));
 		// return result.Slice3d(0, 0).Zip(time).Select(x => new DataPoint<T>(x.Second, x.First));
 	}
 
@@ -98,23 +127,44 @@ public class NCFile : INCFile
 			Type dataType = variable.TypeOfData;
 			Type arrayType = dataType.MakeArrayType();
 			BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
-			Type[] argumentTypes = new[] { typeof(DataSet), typeof(string), typeof(Range) };
+			Type[] argumentTypes = new[] { typeof(DataSet), typeof(string), typeof(Range[]) };
 			MethodInfo? method = typeof(DataSetExtensions).GetMethod(nameof(DataSetExtensions.GetData), flags, argumentTypes);
 			if (method == null)
-				throw new InvalidOperationException($"Time has invalid data type: {dataType.Name}. No GetData() method exists for this type.");
+				throw new InvalidOperationException($"No GetData() method exists for time variable.");
 
 			method = method.MakeGenericMethod(arrayType);
 
-			object? result = method.Invoke(dataset, new object[] { dataset, timeName, range });
+			object? result = method.Invoke(dataset, new object[] { dataset, timeName, new[] { range } });
 
 			if (result == null)
 				throw new InvalidCastException($"Time variable contains no data");
 
-			if (dataType == typeof(double))
-				return (double[])result!;
+			// if (dataType == typeof(double))
+			// 	return (double[])result!;
+
+			// if (dataType == typeof(ulong))
+			// 	return ((ulong[])result).Select(Convert.ToDouble).ToArray();
+
+			// Call Enumerable.Select() on the array, using Convert.ToDouble().
+			//  IEnumerable<TResult> Select<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, int, TResult> selector);
+			Type[] selectArgumentTypes = new[] { typeof(IEnumerable<>), typeof(Func<,>) };
+			MethodInfo select = typeof(Enumerable).GetGenericMethod(nameof(Enumerable.Select), flags, selectArgumentTypes)!;
+			MethodInfo genericSelect = select.MakeGenericMethod(new[] { dataType, typeof(double) });
+			// Func<object, double> converter = Convert.ToDouble;
+			Type[] toDoubleArgumentTypes = new[] { dataType };
+			MethodInfo? toDouble = typeof(Convert).GetMethod(nameof(Convert.ToDouble), flags, toDoubleArgumentTypes);
+			if (toDouble == null)
+				throw new InvalidOperationException($"Unable to process time variable with type {dataType}; this does not appear to be a numeric type");
+			Type converterType = typeof(Func<,>).MakeGenericType(dataType, typeof(double));
+			object converter = Delegate.CreateDelegate(converterType, toDouble);
+			object[] selectArgs = new object[] { result, converter };
+
+			// Note: this will fail if the data type cannot be converted to  double.
+			IEnumerable<double> enumerable = (IEnumerable<double>)genericSelect.Invoke(null, selectArgs)!;
+			return enumerable.ToArray();
 
 			// double[] result = dataset.GetData<double[]>(timeName, range);
-			throw new Exception("TBI");
+			// throw new Exception($"Time variable has invalid data type: {dataType.Name}");
 			// return result;
 		}
 		catch (Exception error)
@@ -125,9 +175,6 @@ public class NCFile : INCFile
 
     private TimeUnits GetTimeUnits(Dimension dim)
 	{
-		if (dataset.Variables[dim.Name].TypeOfData != typeof(double))
-			throw new InvalidOperationException($"Only double typed time dimension is supported");
-
 		Variable time = dataset.Variables[dim.Name];
 		string calendar = (string)time.Metadata["calendar"];
 		string units = (string)time.Metadata["units"];

@@ -40,6 +40,11 @@ public class NCVariable
 	public IEnumerable<NCAttribute> Attributes { get; private init; }
 
 	/// <summary>
+	/// The value of all missing data points for this variable.
+	/// </summary>
+	public object? MissingValue { get; private init; }
+
+	/// <summary>
 	/// Create a new <see cref="NCVariable"/> instance.
 	/// </summary>
 	/// <param name="name">Name of the variable.</param>
@@ -47,12 +52,14 @@ public class NCVariable
 	/// <param name="dimensions">Dimensions of this variable.</param>
 	/// <param name="longName">Long name of the variablel, or null if it doesn't have one.</param>
 	/// <param name="attributes">Attributes of this variable.</param>
-	public NCVariable(string name, Type dataType, IEnumerable<NCDimension> dimensions, string? longName, IEnumerable<NCAttribute> attributes)
+	/// <param name="missingValue">The value given to all missing data points of this variable.</param>
+	public NCVariable(string name, Type dataType, IEnumerable<NCDimension> dimensions, string? longName, IEnumerable<NCAttribute> attributes, object? missingValue)
 	{
 		Name = name;
 		DataType = dataType;
 		Dimensions = dimensions;
 		LongName = longName;
 		Attributes = attributes;
+		MissingValue = missingValue;
 	}
 }
