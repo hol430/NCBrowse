@@ -96,13 +96,23 @@ public class NCFile : INCFile
 
 		// Read variable data.
 		T[,,] result = dataset.GetData<T[,,]>(variable.Name, indices);
+		IEnumerable<T> result1d;
+		if (dims.Count > 3)
+			throw new InvalidOperationException($"TBI: more than 3 dimensions");
+
+		if (IsTime(dims[0]))
+			result1d = result.Slice3di(0, 0);
+		else if (IsTime(dims[1]))
+			result1d = result.Slice3dj(0, 0);
+		else
+			result1d = result.Slice3dk(0, 0);
 
 		// Read time data.
 		Dimension time = GetTimeDimension();
 		double[] times = ReadTemporalData(time.Name);
 		TimeUnits timeUnits = GetTimeUnits(time);
 
-		IEnumerable<(T, double)> zipped = result.Slice3d(0, 0).Zip(times);
+		IEnumerable<(T, double)> zipped = result1d.Zip(times);
 		// zipped = zipped.Where(x => x.Item1 != missingValue);
 
 		object? missingValue = variable.MissingValue;

@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="GirCore.Gtk-4.0" Version="0.4.0" />
     <PackageReference Include="GirCore.Adw-1" Version="0.4.0" />
+    <PackageReference Include="GirCore.Pango-1.0" Version="0.4.0" />
 
     <PackageReference Include="SDSLite" Version="3.0.1" />
     <PackageReference Include="OxyPlot.Core" Version="2.1.0" />

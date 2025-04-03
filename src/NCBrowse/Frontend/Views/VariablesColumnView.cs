@@ -38,6 +38,7 @@ public class VariablesColumnView : ColumnView
 
 		ColumnViewColumn nameColumn = CreateColumn("Name", nameFactory);
 		ColumnViewColumn longNameColumn = CreateColumn("Long Name", longNameFactory);
+		longNameColumn.Expand = true;
 
 		AppendColumn(nameColumn);
 		AppendColumn(longNameColumn);

@@ -61,9 +61,16 @@ public class FilePresenter : IPresenter<IFileView>
 
 	private void OnVariableActivated(NCVariable variable)
 	{
-		if (variable.DataType != typeof(double))
+		IEnumerable<DataPoint<double>> data;
+		if (variable.DataType == typeof(double))
+			data = file.ReadTimeSeries<double>(variable);
+		else if (variable.DataType == typeof(float))
+		{
+			IEnumerable<DataPoint<float>> floats = file.ReadTimeSeries<float>(variable);
+			data = floats.Select(d => new DataPoint<double>(d.Date, Convert.ToDouble(d.Value)));
+		}
+		else
 			throw new InvalidOperationException($"Only plotting of double variables is supported");
-		IEnumerable<DataPoint<double>> data = file.ReadTimeSeries<double>(variable);
 		IColourScheme colours = new DefaultColours();
 		PlotWindow window = new PlotWindow(variable, data, colours);
 		window.Present();

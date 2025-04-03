@@ -9,6 +9,8 @@ public class StringColumnViewFactory<TData> where TData : class
 	private readonly Gio.ListStore model;
 	private readonly SingleSelection selection;
 
+	private ColumnViewColumn? lastColumn;
+
 	public ColumnView View { get; private init; }
 
 	public StringColumnViewFactory()
@@ -26,7 +28,12 @@ public class StringColumnViewFactory<TData> where TData : class
 		factory.OnSetup += OnSetupLabelColumn;
 		factory.OnBind += (_, args) => HandleBind<Label>(args, (l, row) => l.SetText(renderer(row)));
 		ColumnViewColumn column = CreateColumn(name, factory);
+		column.Expand = true;
 		View.AppendColumn(column);
+
+		if (lastColumn != null)
+			lastColumn.Expand = false;
+		lastColumn = column;
 	}
 
 	private ColumnViewColumn CreateColumn(string name, SignalListItemFactory factory)
